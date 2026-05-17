@@ -1,21 +1,16 @@
-// testshapes demo for RGBmatrixPanel library.
-// Demonstrates the drawing abilities of the RGBmatrixPanel library.
-// For 32x64 RGB LED matrix.
+// karl303
+// DeliCounterDisplay_32x64
+// 
+// Targets Arduino Mega with a 32x64 RGB LED matrix panel
+// Implements a "Now serving number:" message, followed by
+// a number. The number can be incremented by pressing a
+// button attached to digital input #2. The number can be
+// reset or set by sending a digit through the serial
+// interface
 
-// WILL NOT FIT on ARDUINO UNO -- requires a Mega, M0 or M4 board
-
+// Uses the Adafruit RGBmatrixPanel library
 #include <RGBmatrixPanel.h>
 
-// Most of the signal pins are configurable, but the CLK pin has some
-// special constraints.  On 8-bit AVR boards it must be on PORTB...
-// Pin 11 works on the Arduino Mega.  On 32-bit SAMD boards it must be
-// on the same PORT as the RGB data pins (D2-D7)...
-// Pin 8 works on the Adafruit Metro M0 or Arduino Zero,
-// Pin A4 works on the Adafruit Metro M4 (if using the Adafruit RGB
-// Matrix Shield, cut trace between CLK pads and run a wire to A4).
-
-//#define CLK  8   // USE THIS ON ADAFRUIT METRO M0, etc.
-//#define CLK A4 // USE THIS ON METRO M4 (not M0)
 #define CLK 11 // USE THIS ON ARDUINO MEGA
 #define OE   9
 #define LAT 10
@@ -45,7 +40,7 @@ void setup() {
     // fill the screen with 'black'
   matrix.fillScreen(matrix.Color333(0, 0, 0));
 
-// draw some text!
+  // draw some text!
   matrix.setTextSize(1);     // size 1 == 8 pixels high
   matrix.setTextWrap(false); // Don't wrap at end of line - will do ourselves
 
@@ -53,8 +48,6 @@ void setup() {
   char *myStr =  "Now ";
   char *myStr1 = "serving";
   char *myStr2 = "number:";
-//  char *myStr3 = "number: ";
-//  char *myStr4 = "load shot.";
 
   for (w=0; w<4; w++) {
     matrix.setTextColor(Wheel(w));
@@ -75,17 +68,9 @@ void setup() {
     matrix.print(myStr2[w]);
   }
 
-/*
-  matrix.setCursor(0, 16);    // next line
-  for (w=0; w<8; w++) {
-    matrix.setTextColor(Wheel(w));
-    matrix.print(myStr3[w]);
-  }
-*/
   matrix.setCursor(28, 18);    // next line
   matrix.print('4');
 
-  // whew!
 }
 
 char count = '2';
@@ -96,17 +81,7 @@ int lastReading = 1;
 
 void loop() {
   int updateDisplay = 0;
-  // Do nothing -- image doesn't change
-  /*
-  matrix.setCursor(28,18);
-  matrix.setTextColor(matrix.Color444(0,0,0));
-  matrix.print(count);
-  count++;
-  matrix.setTextColor(Wheel(8));
-  matrix.setCursor(28,18);
-  matrix.print(count);
-  delay(1000);
-  */
+
   if (Serial.available()) {
     int inByte = Serial.read();
     nextChar = (char)inByte;
