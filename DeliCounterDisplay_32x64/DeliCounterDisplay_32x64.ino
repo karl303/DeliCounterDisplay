@@ -27,7 +27,12 @@ const int ledPin = 13;    // the number of the LED pin
 int buttonState;            // the current reading from the input pin
 int lastButtonState = LOW;  // the previous reading from the input pin
 
-unsigned long debounceDelay = 500;    // the debounce time; increase if the output flickers
+int count = 4;
+int lastCount = 4;
+
+int lastReading = 1;
+
+unsigned long debounceDelay = 350;    // the debounce time; increase if the output flickers
 
 void setup() {
   pinMode(buttonPin, INPUT);
@@ -37,7 +42,7 @@ void setup() {
 
   int w = 0;
 
-    // fill the screen with 'black'
+  // fill the screen with 'black'
   matrix.fillScreen(matrix.Color333(0, 0, 0));
 
   // draw some text!
@@ -69,38 +74,26 @@ void setup() {
   }
 
   matrix.setCursor(28, 18);    // next line
-  matrix.print('4');
-
+  displayDigits(count);
 }
-
-char count = '2';
-char lastChar = '4';
-char nextChar = ' ';
-
-int lastReading = 1;
 
 void loop() {
   int updateDisplay = 0;
 
   if (Serial.available()) {
     int inByte = Serial.read();
-    nextChar = (char)inByte;
-    updateDisplay = 1;
-    matrix.setCursor(28,18);
-    matrix.setTextColor(matrix.Color444(0,0,0));
-    matrix.print(lastChar);
-    matrix.setCursor(28,18);
-    matrix.setTextColor(Wheel(8));
-    matrix.print((char)inByte);
-    lastChar = inByte;
+    if((inByte - '0') >= 0 && (inByte - '0') <= 9)
+    {
+      count = (int)(inByte - '0');
+      updateDisplay = 1;
+    }
   }
-
 
   int reading = digitalRead(buttonPin);
 
   if(lastReading == HIGH && reading == LOW)
   {
-    nextChar = lastChar + 1;
+    count = count + 1;
     updateDisplay = 1;
   }
 
@@ -108,22 +101,64 @@ void loop() {
 
   if(updateDisplay == 1)
   {
-    matrix.setCursor(28,18);
+    // Set text black and write last count to clear display
     matrix.setTextColor(matrix.Color444(0,0,0));
-    matrix.print(lastChar);
-    matrix.setCursor(28,18);
+    displayDigits(lastCount);
+    // Set text green and write new count
     matrix.setTextColor(Wheel(8));
-    matrix.print(nextChar);
-    lastChar = nextChar;
+    displayDigits(count);
+
+    lastCount = count;
 
     if(reading == LOW)
     {
       delay(debounceDelay);
     }
   }
-
 }
 
+
+int displayDigits(int number)
+{
+  int digits = 0;
+  int k = 0;
+  int temp = 0;
+  
+  if(number < 10)
+  {
+    //Serial.println("number < 10");
+    digits = 1;
+  }
+  else if(number < 100)
+  {
+    //Serial.println("number < 100");
+    digits = 2;
+  }
+  else if(number < 1000)
+  {
+    //Serial.println("number < 1000");
+    digits = 3;
+  }
+  else
+  {
+    return -1;
+  }
+
+  matrix.setCursor(28 - 3*(digits-1),18);
+
+  for(k = 0; k < digits; k++)
+  {
+    temp = number;
+    for(int n = 1; n < (digits - k); n++)
+    {
+      temp = temp / 10;
+    }
+    temp = temp % 10;
+
+    matrix.print((char)('0' + temp));
+  }
+  return number;
+}
 
 // Input a value 0 to 24 to get a color value.
 // The colours are a transition r - g - b - back to r.
