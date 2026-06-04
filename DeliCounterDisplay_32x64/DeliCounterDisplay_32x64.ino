@@ -27,12 +27,20 @@ const int ledPin = 13;    // the number of the LED pin
 int buttonState;            // the current reading from the input pin
 int lastButtonState = LOW;  // the previous reading from the input pin
 
-int count = 4;
-int lastCount = 4;
+int count = 10;
+int lastCount = count;
 
 int lastReading = 1;
 
 unsigned long debounceDelay = 350;    // the debounce time; increase if the output flickers
+
+// Copying serial-handler from "Serial Input Basics - updated"
+// https://forum.arduino.cc/t/serial-input-basics-updated/382007
+
+const byte numChars = 32;
+char receivedChars[numChars];   // an array to store the received data
+
+boolean newData = false;
 
 void setup() {
   pinMode(buttonPin, INPUT);
@@ -80,13 +88,11 @@ void setup() {
 void loop() {
   int updateDisplay = 0;
 
-  if (Serial.available()) {
-    int inByte = Serial.read();
-    if((inByte - '0') >= 0 && (inByte - '0') <= 9)
-    {
-      count = (int)(inByte - '0');
-      updateDisplay = 1;
-    }
+  recvWithEndMarker();
+
+  if (newData == true) {
+        updateDisplay = 1;
+        newData = false;
   }
 
   int reading = digitalRead(buttonPin);
@@ -117,6 +123,33 @@ void loop() {
   }
 }
 
+void recvWithEndMarker() {
+    static byte ndx = 0;
+    char endMarker = '\n';
+    char rc;
+    
+    while (Serial.available() > 0 && newData == false) {
+        rc = Serial.read();
+
+        if (rc != endMarker) {
+            receivedChars[ndx] = rc;
+            ndx++;
+            if (ndx >= numChars) {
+                ndx = numChars - 1;
+            }
+        }
+        else {
+            receivedChars[ndx] = '\0'; // terminate the string
+            count = 0;
+            for(int i = 0; i < ndx; i++)
+            {
+              count = (count * 10) + (int)(receivedChars[i] - '0');
+            }
+            ndx = 0;
+            newData = true;
+        }
+    }
+}
 
 int displayDigits(int number)
 {
@@ -138,6 +171,10 @@ int displayDigits(int number)
   {
     //Serial.println("number < 1000");
     digits = 3;
+  }
+  else if(number < 10000)
+  {
+    digits = 4;
   }
   else
   {
